@@ -65,8 +65,8 @@
     <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-20">
         <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3.5">
-                <!-- Logo Institucional: Instituto Leonardo Da Vinci -->
-                <div class="bg-white px-2.5 py-1.5 rounded-lg shadow-md border border-slate-200/80 shrink-0 flex items-center justify-center" title="Instituto Leonardo Da Vinci">
+                <!-- Logo Institucional: Instituto Leonardo Da Vinci (5 clics rápidos activan/desactivan modo secreto) -->
+                <div id="inst-logo-trigger" class="bg-white px-2.5 py-1.5 rounded-lg shadow-md border border-slate-200/80 shrink-0 flex items-center justify-center select-none cursor-pointer transition-transform active:scale-95" title="Instituto Leonardo Da Vinci">
                     <svg class="h-10 sm:h-11 w-auto" viewBox="0 0 320 155" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Instituto Leonardo Da Vinci">
                         <!-- Arco exterior rojo -->
                         <path d="M 10 88 A 136 136 0 0 1 154 7 L 147 17 A 124 124 0 0 0 18 76 Z" fill="#E30613"/>
@@ -101,7 +101,7 @@
                     </h1>
                     <p class="text-xs text-slate-400">Laboratorio Interactivo: Marco Inercial, No Inercial y Vista Pizarra</p>
                     <p class="text-[11px] text-sky-400/90 mt-0.5 font-medium">
-                        Desarrollado por: <span class="text-slate-200">Santiago Sanchez Busso, Benicio Cocco, Juan Pablo Sanchez Busso</span>
+                        Desarrollado por: <span class="text-slate-200">Santiago Sanchez Busso y Benicio Cocco</span>
                     </p>
                 </div>
             </div>
@@ -284,22 +284,20 @@
         <!-- Panel de Controles (4 columnas en desktop) -->
         <aside class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-5 shadow-xl h-fit">
             
-            <!-- Interruptor Modo Gore -->
-            <div id="gore-card" class="p-3 rounded-xl border border-slate-800 bg-slate-950/70 transition-colors">
-                <div class="flex items-center justify-between gap-3">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold uppercase tracking-wider text-rose-400">Modo Gore (Cabina de Auto)</span>
-                        </div>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Reemplaza la bola por una cabeza y registra impactos en la cabina.</p>
+            <!-- Panel Secreto de Modo Gore (Oculto por defecto; aparece solo al activar el Easter Egg) -->
+            <div id="gore-card" class="hidden p-3 rounded-xl border border-rose-900/70 bg-rose-950/25 transition-all">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-rose-400">Modo Gore Activo</span>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                        <input type="checkbox" id="chk-gore" class="sr-only peer">
-                        <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600 peer-checked:after:bg-white"></div>
-                    </label>
+                    <button id="btn-exit-gore" class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-[11px] font-medium transition">
+                        Salir
+                    </button>
                 </div>
-                <div id="gore-actions" class="hidden mt-3 pt-2.5 border-t border-rose-900/40 flex items-center justify-between">
-                    <span class="text-[11px] text-rose-300/80 font-mono">Manchas acumuladas: <span id="splatter-count">0</span></span>
+                <p class="text-[11px] text-rose-200/75 mt-1">Cabina de auto e impactos activados.</p>
+                <div id="gore-actions" class="mt-2.5 pt-2.5 border-t border-rose-900/40 flex items-center justify-between">
+                    <span class="text-[11px] text-rose-300/90 font-mono">Manchas: <span id="splatter-count">0</span></span>
                     <button id="btn-clean-cabin" class="px-2.5 py-1 rounded-md bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800/70 text-xs font-medium transition active:scale-95">
                         Limpiar cabina
                     </button>
@@ -396,7 +394,7 @@
             <div class="mt-auto pt-3 border-t border-slate-800/90 text-[11px] text-slate-400 space-y-1">
                 <p class="font-semibold text-slate-300 uppercase tracking-wider text-[10px]">Equipo de Desarrollo</p>
                 <p class="leading-relaxed text-slate-300">
-                    Santiago Sanchez Busso, Benicio Cocco, Juan Pablo Sanchez Busso
+                    Santiago Sanchez Busso y Benicio Cocco
                 </p>
                 <p class="text-[10px] text-slate-500">Instituto Leonardo Da Vinci • Proyecto de Física</p>
             </div>
@@ -432,7 +430,7 @@
                 <span class="text-slate-300 font-medium">Instituto Leonardo Da Vinci</span>
             </div>
             <p class="text-center sm:text-right text-slate-300">
-                Desarrollado por: <span class="font-semibold text-white">Santiago Sanchez Busso, Benicio Cocco, Juan Pablo Sanchez Busso</span> — Instituto Leonardo Da Vinci
+                Desarrollado por: <span class="font-semibold text-white">Santiago Sanchez Busso y Benicio Cocco</span> — Instituto Leonardo Da Vinci
             </p>
         </div>
     </footer>
@@ -1588,18 +1586,39 @@
             resetSimulation();
         });
 
-        // Modo Gore Toggle y Limpieza
-        document.getElementById('chk-gore').addEventListener('change', (e) => {
-            config.goreMode = e.target.checked;
+        // Easter Egg: Activación/Desactivación secreta del Modo Gore (5 clics rápidos en el logo o tecla 'G')
+        function setGoreMode(enabled) {
+            config.goreMode = enabled;
             const goreCard = document.getElementById('gore-card');
-            const goreActions = document.getElementById('gore-actions');
             if (config.goreMode) {
-                goreCard.classList.add('border-rose-900/70', 'bg-rose-950/20');
-                goreActions.classList.remove('hidden');
+                goreCard.classList.remove('hidden');
             } else {
-                goreCard.classList.remove('border-rose-900/70', 'bg-rose-950/20');
-                goreActions.classList.add('hidden');
+                goreCard.classList.add('hidden');
             }
+        }
+
+        // Trigger por 5 clics seguidos (< 2s) sobre el logo del Instituto Leonardo Da Vinci
+        let logoClickTimes = [];
+        document.getElementById('inst-logo-trigger').addEventListener('click', () => {
+            const now = performance.now();
+            logoClickTimes = logoClickTimes.filter(t => now - t < 2000);
+            logoClickTimes.push(now);
+            if (logoClickTimes.length >= 5) {
+                logoClickTimes = [];
+                setGoreMode(!config.goreMode);
+            }
+        });
+
+        // Trigger por tecla 'G' (ignorando si se escribe en algún input)
+        document.addEventListener('keydown', (e) => {
+            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+            if (e.key === 'g' || e.key === 'G') {
+                setGoreMode(!config.goreMode);
+            }
+        });
+
+        document.getElementById('btn-exit-gore').addEventListener('click', () => {
+            setGoreMode(false);
         });
 
         document.getElementById('btn-clean-cabin').addEventListener('click', () => {
