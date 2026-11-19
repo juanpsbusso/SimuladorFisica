@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio de Física: Inercia y Fuerza Centrífuga</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                            950: '#090d16',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos personalizados para sliders y canvas */
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            border-radius: 999px;
+            background: #334155;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #38bdf8;
+            margin-top: -5px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+            transition: transform 0.1s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+        .canvas-grid {
+            background-image: 
+                linear-gradient(to right, rgba(51, 65, 85, 0.25) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(51, 65, 85, 0.25) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-sky-500/30">
+
+    <!-- Barra Superior -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg tracking-tight text-white leading-tight">
+                        Física de la Inercia y Fuerza Centrífuga
+                    </h1>
+                    <p class="text-xs text-slate-400">Comparación entre Marco Inercial y Marco No Inercial</p>
+                </div>
+            </div>
+
+            <!-- Controles de Reproducción Principales -->
+            <div class="flex items-center gap-2">
+                <button id="btn-play-pause" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm transition shadow-lg shadow-sky-500/20 active:scale-95">
+                    <svg id="icon-pause" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                    </svg>
+                    <svg id="icon-play" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <span id="text-play-pause">Pausar</span>
+                </button>
+                <button id="btn-reset" class="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm transition active:scale-95" title="Reiniciar simulación">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Reiniciar</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+        
+        <!-- Área de Visualización (8 columnas en desktop) -->
+        <div class="lg:col-span-8 flex flex-col gap-4">
+            
+            <!-- Grid de Canvas: Vista Inercial (Principal) + Vista No Inercial (Secundaria) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <!-- Escenario 1: Marco Inercial (Vista Aérea) -->
+                <div class="md:col-span-2 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-xl">
+                    <div class="px-4 py-2.5 bg-slate-850 border-b border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-200">1. Vista Aérea (Marco Inercial)</h2>
+                        </div>
+                        <span id="phase-badge" class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-sky-400 border border-slate-700">
+                            Tramo Recto
+                        </span>
+                    </div>
+                    <div class="relative w-full h-[340px] sm:h-[400px] canvas-grid bg-slate-950" id="inertial-container">
+                        <canvas id="inertialCanvas" class="w-full h-full block"></canvas>
+                        
+                        <!-- Leyenda flotante -->
+                        <div class="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg p-2.5 text-[11px] space-y-1.5 pointer-events-none">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-0.5 bg-sky-400 inline-block"></span>
+                                <span class="text-slate-300">Velocidad real (<span class="font-mono text-sky-400">v</span>)</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-0.5 bg-amber-500 inline-block"></span>
+                                <span class="text-slate-300">Fuerza Normal / Centrípeta (<span class="font-mono text-amber-400">N</span>)</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full border border-dashed border-purple-400 inline-block"></span>
+                                <span class="text-slate-300">Estela inercial de la bola</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Escenario 2: Marco No Inercial (Cámara en el Bloque) -->
+                <div class="md:col-span-1 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-xl">
+                    <div class="px-4 py-2.5 bg-slate-850 border-b border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-200">2. En el Bloque (No Inercial)</h2>
+                        </div>
+                    </div>
+                    <div class="relative w-full h-[260px] md:h-[400px] canvas-grid bg-slate-950 flex items-center justify-center" id="non-inertial-container">
+                        <canvas id="nonInertialCanvas" class="w-full h-full block"></canvas>
+                        
+                        <!-- Indicador de fuerza ficticia -->
+                        <div class="absolute top-3 inset-x-3 bg-slate-900/85 backdrop-blur border border-slate-800 rounded-lg p-2 text-[11px] text-center pointer-events-none">
+                            <p class="text-slate-400">Observador dentro de la caja:</p>
+                            <p id="fictitious-status" class="font-mono font-semibold text-slate-200 mt-0.5">Sin fuerza aparente</p>
+                        </div>
+
+                        <div class="absolute bottom-3 left-3 right-3 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg p-2 text-[11px] space-y-1 pointer-events-none">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-0.5 bg-rose-500 inline-block"></span>
+                                <span class="text-slate-300">Fuerza Centrífuga (<span class="font-mono text-rose-400">F_cf</span>)</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-0.5 bg-amber-500 inline-block"></span>
+                                <span class="text-slate-300">Reacción Pared (<span class="font-mono text-amber-400">N</span>)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Educativo / Explicación Física Dinámica -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg">
+                <div class="flex items-start gap-3">
+                    <div class="p-2 rounded-lg bg-sky-500/10 text-sky-400 mt-0.5">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="space-y-1 text-sm">
+                        <h3 class="font-semibold text-white">¿Qué está ocurriendo físicamente?</h3>
+                        <p id="physics-explanation" class="text-slate-300 leading-relaxed text-xs sm:text-sm">
+                            En el <strong>tramo recto</strong>, el bloque y la bola viajan a velocidad constante. No existen fuerzas laterales actuando sobre la bola, por lo que permanece en reposo relativo respecto al centro del bloque.
+                        </p>
+                        <div class="pt-2 flex flex-wrap gap-4 text-xs font-mono text-slate-400 border-t border-slate-800/80 mt-2">
+                            <div>Aceleración centrípeta: <span id="telemetry-ac" class="text-sky-400 font-semibold">0.00 m/s²</span></div>
+                            <div>Desplazamiento lateral: <span id="telemetry-offset" class="text-amber-400 font-semibold">0%</span></div>
+                            <div>Estado pared: <span id="telemetry-wall" class="text-emerald-400 font-semibold">Libre</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de Controles (4 columnas en desktop) -->
+        <aside class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-5 shadow-xl h-fit">
+            
+            <!-- Selector de Trayectoria -->
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                    Tipo de Trayectoria
+                </label>
+                <div class="grid grid-cols-2 gap-2 p-1 bg-slate-950 rounded-lg border border-slate-800">
+                    <button id="mode-u" class="py-2 px-3 rounded-md text-xs font-semibold transition bg-sky-500 text-slate-950 shadow">
+                        Giro en U (180°)
+                        <span class="block text-[10px] font-normal opacity-80">Paralela opuesta</span>
+                    </button>
+                    <button id="mode-l" class="py-2 px-3 rounded-md text-xs font-semibold transition text-slate-400 hover:text-white">
+                        Giro en L (90°)
+                        <span class="block text-[10px] font-normal opacity-80">Perpendicular</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Parámetros Físicos (Sliders) -->
+            <div class="space-y-4">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5">
+                    Parámetros Físicos
+                </h3>
+
+                <!-- Velocidad -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <span class="text-slate-300 font-medium">Velocidad del bloque (<span class="font-mono text-sky-400">v</span>)</span>
+                        <span id="val-speed" class="font-mono text-sky-400 font-semibold">160 px/s</span>
+                    </div>
+                    <input type="range" id="slider-speed" min="60" max="320" value="160" class="w-full">
+                </div>
+
+                <!-- Radio de giro -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <span class="text-slate-300 font-medium">Radio de curvatura (<span class="font-mono text-sky-400">R</span>)</span>
+                        <span id="val-radius" class="font-mono text-sky-400 font-semibold">110 px</span>
+                    </div>
+                    <input type="range" id="slider-radius" min="65" max="150" value="110" class="w-full">
+                    <p class="text-[11px] text-slate-500 mt-1">A menor radio <span class="font-mono">R</span>, mayor aceleración centrípeta (<span class="font-mono">a = v²/R</span>).</p>
+                </div>
+
+                <!-- Fricción interna -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <span class="text-slate-300 font-medium">Fricción interna (<span class="font-mono text-sky-400">μ</span>)</span>
+                        <span id="val-friction" class="font-mono text-sky-400 font-semibold">0.02 (Hielo)</span>
+                    </div>
+                    <input type="range" id="slider-friction" min="0" max="0.25" step="0.01" value="0.02" class="w-full">
+                </div>
+
+                <!-- Elasticidad / Rebote -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <span class="text-slate-300 font-medium">Rebote en paredes (<span class="font-mono text-sky-400">e</span>)</span>
+                        <span id="val-restitution" class="font-mono text-sky-400 font-semibold">0.20</span>
+                    </div>
+                    <input type="range" id="slider-restitution" min="0" max="0.9" step="0.05" value="0.20" class="w-full">
+                </div>
+            </div>
+
+            <!-- Opciones Visuales -->
+            <div class="space-y-2.5">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5">
+                    Herramientas Visuales
+                </h3>
+
+                <label class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-850 cursor-pointer transition">
+                    <span class="text-xs text-slate-300">Mostrar vectores de fuerza y velocidad</span>
+                    <input type="checkbox" id="chk-vectors" checked class="w-4 h-4 rounded accent-sky-500 cursor-pointer">
+                </label>
+
+                <label class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-850 cursor-pointer transition">
+                    <span class="text-xs text-slate-300">Mostrar estela inercial de la bola</span>
+                    <input type="checkbox" id="chk-trail" checked class="w-4 h-4 rounded accent-sky-500 cursor-pointer">
+                </label>
+
+                <label class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-850 cursor-pointer transition">
+                    <span class="text-xs text-slate-300 flex items-center gap-1.5">
+                        <span>Cámara lenta (0.25x)</span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">Detalle</span>
+                    </span>
+                    <input type="checkbox" id="chk-slowmo" class="w-4 h-4 rounded accent-amber-500 cursor-pointer">
+                </label>
+            </div>
+
+        </aside>
+    </main>
+
+    <script>
+        /**
+         * SIMULACIÓN FÍSICA DE INERCIA Y FUERZA CENTRÍFUGA APARENTE
+         * -------------------------------------------------------------------
+         * Modelo físico:
+         * 1. El bloque hueco sigue una trayectoria paramétrica C1 continua (tramo recto + arco circular + tramo recto).
+         * 2. La bola dentro del bloque se simula en coordenadas mundiales (marco inercial) usando integración sub-stepping
+         *    para garantizar estabilidad y precisión en colisiones con las paredes interiores en rotación.
+         * 3. Cuando la bola entra en contacto con una pared interior del bloque, se calcula la velocidad relativa
+         *    entre la bola y el punto de contacto de la pared (incluyendo la velocidad tangencial por rotación ω × r),
+         *    aplicando impulso de restitución, fricción y registrando la Fuerza Normal ejercida por la pared.
+         */
+
+        // Referencias al DOM
+        const inertialCanvas = document.getElementById('inertialCanvas');
+        const inertialCtx = inertialCanvas.getContext('2d');
+        const nonInertialCanvas = document.getElementById('nonInertialCanvas');
+        const nonInertialCtx = nonInertialCanvas.getContext('2d');
+
+        // Estado de configuración
+        const config = {
+            mode: 'U', // 'U' (180 deg) o 'L' (90 deg)
+            speed: 160, // px/s
+            radius: 110, // px
+            friction: 0.02, // coeficiente de amortiguamiento/fricción interna
+            restitution: 0.20, // coeficiente de restitución de las paredes
+            showVectors: true,
+            showTrail: true,
+            slowMo: false
+        };
+
+        // Dimensiones del bloque hueco y la bola
+        const BOX_LENGTH = 74; // largo en dirección del movimiento
+        const BOX_WIDTH = 48;  // ancho perpendicular al movimiento
+        const WALL_THICKNESS = 5;
+        const BALL_RADIUS = 9;
+        const INNER_HALF_L = (BOX_LENGTH / 2) - WALL_THICKNESS - BALL_RADIUS;
+        const INNER_HALF_W = (BOX_WIDTH / 2) - WALL_THICKNESS - BALL_RADIUS;
+
+        // Estado de la simulación
+        let simState = {
+            isRunning: true,
+            distanceTraveled: 0,
+            totalPathLength: 0,
+            straight1Len: 0,
+            arcLen: 0,
+            straight2Len: 0,
+            // Estado del bloque
+            boxPos: { x: 0, y: 0 },
+            boxAngle: 0,
+            boxAngularVel: 0,
+            currentPhase: 'recta1', // 'recta1', 'curva', 'recta2'
+            // Estado de la bola (en coordenadas inerciales mundiales)
+            ballPos: { x: 0, y: 0 },
+            ballVel: { x: 0, y: 0 },
+            // Fuerzas registradas para visualización
+            normalForceVec: { x: 0, y: 0 }, // En marco mundial
+            localNormalForce: { x: 0, y: 0 }, // En marco del bloque (x: longitudinal, y: lateral)
+            fictitiousCentrifugal: { x: 0, y: 0 }, // Fuerza centrífuga aparente en marco del bloque
+            wallContact: false,
+            trail: [] // Historial de posiciones de la bola
+        };
+
+        // Dimensiones lógicas de los canvas
+        let inertialSize = { w: 600, h: 400 };
+        let nonInertialSize = { w: 300, h: 400 };
+
+        /**
+         * Ajusta la resolución de ambos canvas al tamaño de su contenedor (soporte Retina/HiDPI)
+         */
+        function resizeCanvases() {
+            const dpr = window.devicePixelRatio || 1;
+
+            const rect1 = document.getElementById('inertial-container').getBoundingClientRect();
+            inertialSize.w = rect1.width;
+            inertialSize.h = rect1.height;
+            inertialCanvas.width = rect1.width * dpr;
+            inertialCanvas.height = rect1.height * dpr;
+            inertialCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            const rect2 = document.getElementById('non-inertial-container').getBoundingClientRect();
+            nonInertialSize.w = rect2.width;
+            nonInertialSize.h = rect2.height;
+            nonInertialCanvas.width = rect2.width * dpr;
+            nonInertialCanvas.height = rect2.height * dpr;
+            nonInertialCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            resetSimulation();
+        }
+
+        /**
+         * Calcula la geometría de la pista según el modo ('U' o 'L') y el radio R,
+         * centrando el recorrido en el canvas inercial.
+         */
+        function getPathGeometry() {
+            const R = config.radius;
+            const w = inertialSize.w;
+            const h = inertialSize.h;
+
+            if (config.mode === 'U') {
+                // Giro en U (180°): entra por arriba hacia la derecha, gira abajo y vuelve hacia la izquierda
+                const straightLen = Math.max(110, Math.min(w * 0.48, 280));
+                const totalWidth = straightLen + R;
+                const totalHeight = 2 * R;
+
+                const startX = (w - totalWidth) / 2 + 20;
+                const startY = (h - totalHeight) / 2;
+
+                return {
+                    startX,
+                    startY,
+                    straight1Len: straightLen,
+                    arcAngle: Math.PI, // 180 grados
+                    arcLen: Math.PI * R,
+                    straight2Len: straightLen,
+                    centerX: startX + straightLen,
+                    centerY: startY + R
+                };
+            } else {
+                // Giro en L (90°): entra por arriba hacia la derecha, gira 90° hacia abajo
+                const straight1Len = Math.max(100, Math.min(w * 0.45, 250));
+                const straight2Len = Math.max(90, Math.min(h * 0.42, 180));
+                const totalWidth = straight1Len + R;
+                const totalHeight = R + straight2Len;
+
+                const startX = (w - totalWidth) / 2 + 15;
+                const startY = (h - totalHeight) / 2 + 15;
+
+                return {
+                    startX,
+                    startY,
+                    straight1Len,
+                    arcAngle: Math.PI / 2, // 90 grados
+                    arcLen: (Math.PI / 2) * R,
+                    straight2Len,
+                    centerX: startX + straight1Len,
+                    centerY: startY + R
+                };
+            }
+        }
+
+        /**
+         * Devuelve la posición (x, y), el ángulo tangente (rad) y la velocidad angular (rad/s)
+         * del bloque a una distancia recorrida `s` a lo largo de la pista.
+         */
+        function evaluateTrackAt(s) {
+            const geom = getPathGeometry();
+            const R = config.radius;
+            const v = config.speed;
+
+            if (s <= geom.straight1Len) {
+                // Tramo 1: Recta horizontal hacia la derecha (ángulo = 0)
+                return {
+                    x: geom.startX + s,
+                    y: geom.startY,
+                    angle: 0,
+                    angularVel: 0,
+                    phase: 'recta1'
+                };
+            } else if (s <= geom.straight1Len + geom.arcLen) {
+                // Tramo 2: Curva circular de radio R (sentido horario)
+                const arcS = s - geom.straight1Len;
+                const theta = arcS / R; // ángulo recorrido en la curva (0 a PI o PI/2)
+                // El centro del círculo está en (centerX, centerY) y el inicio del arco en ángulo -PI/2
+                const circleAngle = -Math.PI / 2 + theta;
+                return {
+                    x: geom.centerX + R * Math.cos(circleAngle),
+                    y: geom.centerY + R * Math.sin(circleAngle),
+                    angle: theta, // tangente gira de 0 a theta
+                    angularVel: v / R, // ω = v / R
+                    phase: 'curva'
+                };
+            } else {
+                // Tramo 3: Recta de salida
+                const s2 = s - (geom.straight1Len + geom.arcLen);
+                if (config.mode === 'U') {
+                    // Regreso paralelo hacia la izquierda (ángulo = PI)
+                    return {
+                        x: geom.centerX - s2,
+                        y: geom.centerY + R,
+                        angle: Math.PI,
+                        angularVel: 0,
+                        phase: 'recta2'
+                    };
+                } else {
+                    // Salida perpendicular hacia abajo (ángulo = PI/2)
+                    return {
+                        x: geom.centerX + R,
+                        y: geom.centerY + s2,
+                        angle: Math.PI / 2,
+                        angularVel: 0,
+                        phase: 'recta2'
+                    };
+                }
+            }
+        }
+
+        /**
+         * Reinicia el bloque y la bola al inicio de la trayectoria
+         */
+        function resetSimulation() {
+            const geom = getPathGeometry();
+            simState.totalPathLength = geom.straight1Len + geom.arcLen + geom.straight2Len;
+            simState.distanceTraveled = 0;
+
+            const initialPose = evaluateTrackAt(0);
+            simState.boxPos = { x: initialPose.x, y: initialPose.y };
+            simState.boxAngle = initialPose.angle;
+            simState.boxAngularVel = 0;
+            simState.currentPhase = 'recta1';
+
+            // La bola empieza exactamente en el centro del bloque con la misma velocidad inicial
+            simState.ballPos = { x: initialPose.x, y: initialPose.y };
+            simState.ballVel = {
+                x: Math.cos(initialPose.angle) * config.speed,
+                y: Math.sin(initialPose.angle) * config.speed
+            };
+
+            simState.normalForceVec = { x: 0, y: 0 };
+            simState.localNormalForce = { x: 0, y: 0 };
+            simState.fictitiousCentrifugal = { x: 0, y: 0 };
+            simState.wallContact = false;
+            simState.trail = [{ x: simState.ballPos.x, y: simState.ballPos.y }];
+        }
+
+        /**
+         * Paso de integración física (con sub-pasos para evitar efecto túnel en las paredes)
+         */
+        function stepPhysics(dt) {
+            if (!simState.isRunning) return;
+
+            const timeScale = config.slowMo ? 0.25 : 1.0;
+            const effectiveDt = Math.min(dt, 0.05) * timeScale;
+            const subSteps = 12;
+            const subDt = effectiveDt / subSteps;
+
+            // Reiniciar acumuladores de fuerza para este frame
+            let accNormalWorld = { x: 0, y: 0 };
+            let accNormalLocal = { x: 0, y: 0 };
+            let hadContact = false;
+
+            for (let step = 0; step < subSteps; step++) {
+                // 1. Avanzar el bloque a lo largo de la pista
+                simState.distanceTraveled += config.speed * subDt;
+
+                // Bucle continuo con pequeña pausa al final
+                if (simState.distanceTraveled > simState.totalPathLength) {
+                    resetSimulation();
+                    return;
+                }
+
+                const pose = evaluateTrackAt(simState.distanceTraveled);
+                simState.boxPos.x = pose.x;
+                simState.boxPos.y = pose.y;
+                simState.boxAngle = pose.angle;
+                simState.boxAngularVel = pose.angularVel;
+                simState.currentPhase = pose.phase;
+
+                // 2. Mover la bola libremente según su inercia (Primera Ley de Newton)
+                simState.ballPos.x += simState.ballVel.x * subDt;
+                simState.ballPos.y += simState.ballVel.y * subDt;
+
+                // 3. Transformar posición de la bola al sistema de referencia local del bloque
+                const cosA = Math.cos(-simState.boxAngle);
+                const sinA = Math.sin(-simState.boxAngle);
+                const dx = simState.ballPos.x - simState.boxPos.x;
+                const dy = simState.ballPos.y - simState.boxPos.y;
+
+                // Coordenadas locales dentro del bloque:
+                // localX: eje longitudinal (adelante/atrás)
+                // localY: eje transversal (derecha/izquierda; en giro horario, -Y es el exterior de la curva)
+                let localX = dx * cosA - dy * sinA;
+                let localY = dx * sinA + dy * cosA;
+
+                // Velocidad de la pared en el punto donde está la bola: v_pared = v_centro + ω × r
+                const omega = simState.boxAngularVel;
+                const boxVx = Math.cos(simState.boxAngle) * config.speed;
+                const boxVy = Math.sin(simState.boxAngle) * config.speed;
+
+                // r en mundo = (dx, dy), ω × r en 2D = (-ω * dy, ω * dx)
+                const wallVelWorldX = boxVx - omega * dy;
+                const wallVelWorldY = boxVy + omega * dx;
+
+                // Velocidad relativa de la bola respecto a la pared en coordenadas locales
+                const relVxWorld = simState.ballVel.x - wallVelWorldX;
+                const relVyWorld = simState.ballVel.y - wallVelWorldY;
+                let relLocalVx = relVxWorld * cosA - relVyWorld * sinA;
+                let relLocalVy = relVxWorld * sinA + relVyWorld * cosA;
+
+                // Aplicar fricción interna (rozamiento con el suelo del bloque)
+                if (config.friction > 0) {
+                    const damping = Math.exp(-config.friction * 18 * subDt);
+                    relLocalVx *= damping;
+                    relLocalVy *= damping;
+                }
+
+                // 4. Detección y resolución de colisiones contra las 4 paredes interiores
+                let impulseLocalX = 0;
+                let impulseLocalY = 0;
+
+                // Paredes longitudinales (frontal / trasera)
+                if (localX > INNER_HALF_L) {
+                    localX = INNER_HALF_L;
+                    if (relLocalVx > 0) {
+                        const oldVx = relLocalVx;
+                        relLocalVx = -relLocalVx * config.restitution;
+                        impulseLocalX += (relLocalVx - oldVx);
+                        hadContact = true;
+                    }
+                } else if (localX < -INNER_HALF_L) {
+                    localX = -INNER_HALF_L;
+                    if (relLocalVx < 0) {
+                        const oldVx = relLocalVx;
+                        relLocalVx = -relLocalVx * config.restitution;
+                        impulseLocalX += (relLocalVx - oldVx);
+                        hadContact = true;
+                    }
+                }
+
+                // Paredes laterales (interior / exterior de la curva)
+                if (localY > INNER_HALF_W) {
+                    localY = INNER_HALF_W;
+                    if (relLocalVy > 0) {
+                        const oldVy = relLocalVy;
+                        relLocalVy = -relLocalVy * config.restitution;
+                        impulseLocalY += (relLocalVy - oldVy);
+                        hadContact = true;
+                    }
+                } else if (localY < -INNER_HALF_W) {
+                    // Pared exterior durante el giro horario
+                    localY = -INNER_HALF_W;
+                    if (relLocalVy < 0) {
+                        const oldVy = relLocalVy;
+                        relLocalVy = -relLocalVy * config.restitution;
+                        impulseLocalY += (relLocalVy - oldVy);
+                        hadContact = true;
+                    }
+                }
+
+                // 5. Reconstruir posición y velocidad mundial de la bola tras restricciones
+                const cosW = Math.cos(simState.boxAngle);
+                const sinW = Math.sin(simState.boxAngle);
+
+                const newDx = localX * cosW - localY * sinW;
+                const newDy = localX * sinW + localY * cosW;
+                simState.ballPos.x = simState.boxPos.x + newDx;
+                simState.ballPos.y = simState.boxPos.y + newDy;
+
+                // Recalcular velocidad de pared en la posición corregida
+                const corrWallVx = boxVx - omega * newDy;
+                const corrWallVy = boxVy + omega * newDx;
+
+                const newRelWorldVx = relLocalVx * cosW - relLocalVy * sinW;
+                const newRelWorldVy = relLocalVx * sinW + relLocalVy * cosW;
+
+                simState.ballVel.x = corrWallVx + newRelWorldVx;
+                simState.ballVel.y = corrWallVy + newRelWorldVy;
+
+                // Acumular fuerza normal (F = Δv / Δt)
+                accNormalLocal.x += impulseLocalX / subDt;
+                accNormalLocal.y += impulseLocalY / subDt;
+            }
+
+            // Promediar fuerzas en los sub-pasos y suavizar visualmente
+            const avgLocalFx = accNormalLocal.x / subSteps;
+            const avgLocalFy = accNormalLocal.y / subSteps;
+
+            simState.localNormalForce.x = simState.localNormalForce.x * 0.7 + avgLocalFx * 0.3;
+            simState.localNormalForce.y = simState.localNormalForce.y * 0.7 + avgLocalFy * 0.3;
+
+            const cosW = Math.cos(simState.boxAngle);
+            const sinW = Math.sin(simState.boxAngle);
+            simState.normalForceVec.x = simState.localNormalForce.x * cosW - simState.localNormalForce.y * sinW;
+            simState.normalForceVec.y = simState.localNormalForce.x * sinW + simState.localNormalForce.y * cosW;
+            simState.wallContact = hadContact;
+
+            // Calcular fuerza centrífuga aparente en el marco no inercial: F_cf = -m * (ω × (ω × r))
+            // En el marco del bloque, apunta radialmente hacia afuera de la curva (-Y local)
+            const ac = simState.boxAngularVel * simState.boxAngularVel * config.radius;
+            simState.fictitiousCentrifugal = {
+                x: 0,
+                y: simState.currentPhase === 'curva' ? -ac : 0
+            };
+
+            // Registrar estela inercial
+            const lastTrail = simState.trail[simState.trail.length - 1];
+            if (!lastTrail || Math.hypot(simState.ballPos.x - lastTrail.x, simState.ballPos.y - lastTrail.y) > 4) {
+                simState.trail.push({ x: simState.ballPos.x, y: simState.ballPos.y });
+                if (simState.trail.length > 260) simState.trail.shift();
+            }
+        }
+
+        /**
+         * Dibuja una flecha vectorial con punta estilizada
+         */
+        function drawVector(ctx, fromX, fromY, vecX, vecY, color, label = '') {
+            const mag = Math.hypot(vecX, vecY);
+            if (mag < 4) return;
+
+            const toX = fromX + vecX;
+            const toY = fromY + vecY;
+            const angle = Math.atan2(vecY, vecX);
+            const headLen = Math.min(10, mag * 0.35);
+
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+
+            // Línea principal
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+
+            // Punta de flecha
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - headLen * Math.cos(angle - Math.PI / 6), toY - headLen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - headLen * Math.cos(angle + Math.PI / 6), toY - headLen * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+
+            // Etiqueta opcional
+            if (label) {
+                ctx.font = '600 11px "JetBrains Mono", monospace';
+                ctx.fillText(label, toX + 6, toY - 6);
+            }
+            ctx.restore();
+        }
+
+        /**
+         * Renderiza el Escenario 1: Vista Aérea (Marco Inercial)
+         */
+        function renderInertialView() {
+            const ctx = inertialCtx;
+            const w = inertialSize.w;
+            const h = inertialSize.h;
+            ctx.clearRect(0, 0, w, h);
+
+            const geom = getPathGeometry();
+            const R = config.radius;
+
+            // 1. Dibujar guía de trayectoria completa
+            ctx.save();
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+            ctx.lineWidth = BOX_WIDTH + 10;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(geom.startX, geom.startY);
+            ctx.lineTo(geom.centerX, geom.startY);
+            ctx.arc(geom.centerX, geom.centerY, R, -Math.PI / 2, -Math.PI / 2 + geom.arcAngle, false);
+            if (config.mode === 'U') {
+                ctx.lineTo(geom.centerX - geom.straight2Len, geom.centerY + R);
+            } else {
+                ctx.lineTo(geom.centerX + R, geom.centerY + geom.straight2Len);
+            }
+            ctx.stroke();
+
+            // Línea central punteada de referencia
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([6, 6]);
+            ctx.stroke();
+            ctx.restore();
+
+            // Indicador del centro de curvatura y radio R
+            ctx.save();
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.5)';
+            ctx.beginPath();
+            ctx.arc(geom.centerX, geom.centerY, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(geom.centerX, geom.centerY);
+            ctx.lineTo(geom.centerX + R * Math.cos(-Math.PI / 4), geom.centerY + R * Math.sin(-Math.PI / 4));
+            ctx.stroke();
+            ctx.font = '11px "JetBrains Mono", monospace';
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
+            ctx.fillText(`R=${R}`, geom.centerX + (R * 0.45), geom.centerY - (R * 0.25));
+            ctx.restore();
+
+            // 2. Dibujar estela inercial de la bola
+            if (config.showTrail && simState.trail.length > 1) {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(192, 132, 252, 0.75)'; // Púrpura brillante
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(simState.trail[0].x, simState.trail[0].y);
+                for (let i = 1; i < simState.trail.length; i++) {
+                    ctx.lineTo(simState.trail[i].x, simState.trail[i].y);
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 3. Dibujar el bloque hueco rectangular
+            ctx.save();
+            ctx.translate(simState.boxPos.x, simState.boxPos.y);
+            ctx.rotate(simState.boxAngle);
+
+            // Fondo interior del bloque
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.fillRect(-BOX_LENGTH / 2, -BOX_WIDTH / 2, BOX_LENGTH, BOX_WIDTH);
+
+            // Línea central del bloque para referencia visual
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-BOX_LENGTH / 2 + 6, 0);
+            ctx.lineTo(BOX_LENGTH / 2 - 6, 0);
+            ctx.stroke();
+
+            // Paredes del bloque
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = WALL_THICKNESS;
+            ctx.strokeRect(
+                -BOX_LENGTH / 2 + WALL_THICKNESS / 2,
+                -BOX_WIDTH / 2 + WALL_THICKNESS / 2,
+                BOX_LENGTH - WALL_THICKNESS,
+                BOX_WIDTH - WALL_THICKNESS
+            );
+
+            // Indicador frontal del bloque (flecha sutil de dirección)
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.moveTo(BOX_LENGTH / 2 - 2, 0);
+            ctx.lineTo(BOX_LENGTH / 2 - 9, -5);
+            ctx.lineTo(BOX_LENGTH / 2 - 9, 5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            // 4. Dibujar la bola libre
+            ctx.save();
+            const grad = ctx.createRadialGradient(
+                simState.ballPos.x - 3, simState.ballPos.y - 3, 1,
+                simState.ballPos.x, simState.ballPos.y, BALL_RADIUS
+            );
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.4, '#fb923c');
+            grad.addColorStop(1, '#c2410c');
+
+            ctx.fillStyle = grad;
+            ctx.shadowColor = 'rgba(249, 115, 22, 0.5)';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(simState.ballPos.x, simState.ballPos.y, BALL_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // 5. Dibujar vectores en Marco Inercial
+            if (config.showVectors) {
+                // Vector velocidad de la bola (Cian)
+                const vScale = 0.28;
+                drawVector(
+                    ctx,
+                    simState.ballPos.x,
+                    simState.ballPos.y,
+                    simState.ballVel.x * vScale,
+                    simState.ballVel.y * vScale,
+                    '#38bdf8',
+                    'v'
+                );
+
+                // Vector Fuerza Normal / Centrípeta ejercida por la pared sobre la bola (Ámbar)
+                const fScale = 0.14;
+                drawVector(
+                    ctx,
+                    simState.ballPos.x,
+                    simState.ballPos.y,
+                    simState.normalForceVec.x * fScale,
+                    simState.normalForceVec.y * fScale,
+                    '#f59e0b',
+                    'N'
+                );
+            }
+        }
+
+        /**
+         * Renderiza el Escenario 2: Vista desde el Bloque (Marco No Inercial)
+         * El bloque permanece fijo y vertical en el centro; el mundo gira alrededor.
+         */
+        function renderNonInertialView() {
+            const ctx = nonInertialCtx;
+            const w = nonInertialSize.w;
+            const h = nonInertialSize.h;
+            ctx.clearRect(0, 0, w, h);
+
+            const cx = w / 2;
+            const cy = h / 2 + 10;
+            const scale = 2.3; // Zoom ampliado para ver claramente el interior
+
+            // Calcular posición local de la bola respecto al centro del bloque
+            const cosA = Math.cos(-simState.boxAngle);
+            const sinA = Math.sin(-simState.boxAngle);
+            const dx = simState.ballPos.x - simState.boxPos.x;
+            const dy = simState.ballPos.y - simState.boxPos.y;
+            const localX = dx * cosA - dy * sinA; // Adelante (+) / Atrás (-)
+            const localY = dx * sinA + dy * cosA; // Derecha interior (+) / Izquierda exterior (-)
+
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            // Orientamos el bloque hacia arriba (-90° visual) para que:
+            // Arriba = Adelante (+localX)
+            // Izquierda = Exterior de la curva (-localY)
+            // Derecha = Interior de la curva (+localY)
+            const screenBallX = localY * scale;
+            const screenBallY = -localX * scale;
+
+            const boxW = BOX_WIDTH * scale;
+            const boxL = BOX_LENGTH * scale;
+            const wallT = WALL_THICKNESS * scale;
+
+            // Etiquetas de orientación espacial del bloque
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.45)';
+            ctx.font = '600 10px "Inter", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('FRENTE (Avance)', 0, -boxL / 2 - 10);
+            ctx.fillText('EXTERIOR CURVA', -boxW / 2 - 24, 0);
+            ctx.fillText('INTERIOR', boxW / 2 + 24, 0);
+
+            // Fondo del bloque fijo
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(-boxW / 2, -boxL / 2, boxW, boxL);
+
+            // Cruz central de referencia
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(0, -boxL / 2 + wallT);
+            ctx.lineTo(0, boxL / 2 - wallT);
+            ctx.moveTo(-boxW / 2 + wallT, 0);
+            ctx.lineTo(boxW / 2 - wallT, 0);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Iluminar pared exterior si la bola la presiona durante la curva
+            if (simState.currentPhase === 'curva' && localY <= -INNER_HALF_W + 1.5) {
+                ctx.fillStyle = 'rgba(244, 63, 94, 0.25)';
+                ctx.fillRect(-boxW / 2, -boxL / 2, wallT + 4, boxL);
+            }
+
+            // Paredes del bloque fijo
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = wallT;
+            ctx.strokeRect(
+                -boxW / 2 + wallT / 2,
+                -boxL / 2 + wallT / 2,
+                boxW - wallT,
+                boxL - wallT
+            );
+
+            // Dibujar la bola en coordenadas del bloque
+            const rBall = BALL_RADIUS * scale;
+            const grad = ctx.createRadialGradient(
+                screenBallX - 4, screenBallY - 4, 2,
+                screenBallX, screenBallY, rBall
+            );
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.4, '#fb923c');
+            grad.addColorStop(1, '#c2410c');
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(screenBallX, screenBallY, rBall, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Dibujar vectores en el Marco No Inercial
+            if (config.showVectors) {
+                // 1. Fuerza Centrífuga Aparente (F_cf) hacia afuera (izquierda en pantalla)
+                const cfMag = Math.abs(simState.fictitiousCentrifugal.y) * 0.22;
+                if (cfMag > 3) {
+                    drawVector(ctx, screenBallX, screenBallY, -cfMag, 0, '#f43f5e', 'F_cf');
+                }
+
+                // 2. Fuerza Normal de la pared (N) oponiéndose hacia adentro (derecha en pantalla)
+                const nScreenX = simState.localNormalForce.y * 0.22;
+                const nScreenY = -simState.localNormalForce.x * 0.22;
+                drawVector(ctx, screenBallX, screenBallY, nScreenX, nScreenY, '#f59e0b', 'N');
+            }
+
+            ctx.restore();
+        }
+
+        /**
+         * Actualiza los textos pedagógicos y telemetría en tiempo real
+         */
+        function updateTelemetryUI() {
+            const phaseBadge = document.getElementById('phase-badge');
+            const explanation = document.getElementById('physics-explanation');
+            const fictitiousStatus = document.getElementById('fictitious-status');
+            const telAc = document.getElementById('telemetry-ac');
+            const telOffset = document.getElementById('telemetry-offset');
+            const telWall = document.getElementById('telemetry-wall');
+
+            // Calcular desplazamiento lateral porcentual
+            const cosA = Math.cos(-simState.boxAngle);
+            const sinA = Math.sin(-simState.boxAngle);
+            const dx = simState.ballPos.x - simState.boxPos.x;
+            const dy = simState.ballPos.y - simState.boxPos.y;
+            const localY = dx * sinA + dy * cosA;
+            const offsetPct = Math.min(100, Math.round((Math.abs(localY) / INNER_HALF_W) * 100));
+
+            // Aceleración centrípeta escalada a unidades didácticas (m/s²)
+            const rawAc = (config.speed * config.speed) / config.radius;
+            const displayAc = simState.currentPhase === 'curva' ? (rawAc / 40).toFixed(2) : '0.00';
+
+            telAc.textContent = `${displayAc} m/s²`;
+            telOffset.textContent = `${offsetPct}%`;
+
+            if (simState.currentPhase === 'recta1') {
+                phaseBadge.textContent = '1. Recta de Entrada';
+                phaseBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-sky-400 border border-slate-700';
+                fictitiousStatus.textContent = 'Sin fuerza aparente (a = 0)';
+                fictitiousStatus.className = 'font-mono font-semibold text-slate-300 mt-0.5';
+                telWall.textContent = 'Sin contacto';
+                telWall.className = 'text-emerald-400 font-semibold';
+
+                explanation.innerHTML = `En la <strong>recta de entrada</strong>, el bloque y la bola avanzan juntos con velocidad uniforme. Al no haber cambio de dirección, la inercia mantiene a la bola centrada.`;
+            } else if (simState.currentPhase === 'curva') {
+                phaseBadge.textContent = `2. Curva (${config.mode === 'U' ? '180°' : '90°'})`;
+                phaseBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40';
+                fictitiousStatus.textContent = '¡Empuje centrífugo hacia afuera!';
+                fictitiousStatus.className = 'font-mono font-semibold text-rose-400 mt-0.5';
+                telWall.textContent = offsetPct > 90 ? 'Presionando pared exterior' : 'Desplazándose por inercia';
+                telWall.className = 'text-amber-400 font-semibold';
+
+                explanation.innerHTML = `<strong>¡En la curva!</strong> En la <em>Vista Aérea</em> (observa la estela púrpura), la bola intenta seguir en línea recta por <strong>inercia</strong> mientras el bloque gira. Desde adentro (<em>Vista 2</em>), esto se percibe como una <strong>fuerza centrífuga</strong> que lanza la bola contra la pared exterior, la cual ejerce una fuerza normal centrípeta (<span class="font-mono text-amber-400">N</span>) para obligarla a doblar.`;
+            } else {
+                phaseBadge.textContent = config.mode === 'U' ? '3. Regreso Paralelo' : '3. Salida Perpendicular';
+                phaseBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+                fictitiousStatus.textContent = 'Cesa la fuerza centrífuga';
+                fictitiousStatus.className = 'font-mono font-semibold text-emerald-400 mt-0.5';
+                telWall.textContent = config.friction > 0.05 ? 'Frenando por roce' : 'Movimiento libre';
+                telWall.className = 'text-sky-400 font-semibold';
+
+                explanation.innerHTML = `Al salir a la <strong>recta final</strong>, el bloque deja de girar y desaparece la aceleración centrípeta. La pared deja de empujar a la bola y esta continúa con su nueva dirección.`;
+            }
+        }
+
+        // Bucle principal de animación
+        let lastTime = 0;
+        function animate(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const dt = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            stepPhysics(dt);
+            renderInertialView();
+            renderNonInertialView();
+            updateTelemetryUI();
+
+            requestAnimationFrame(animate);
+        }
+
+        // Eventos de Controles Interactivos
+        document.getElementById('btn-play-pause').addEventListener('click', () => {
+            simState.isRunning = !simState.isRunning;
+            document.getElementById('icon-pause').classList.toggle('hidden', !simState.isRunning);
+            document.getElementById('icon-play').classList.toggle('hidden', simState.isRunning);
+            document.getElementById('text-play-pause').textContent = simState.isRunning ? 'Pausar' : 'Reanudar';
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            resetSimulation();
+        });
+
+        // Selector de modo U vs L
+        const btnModeU = document.getElementById('mode-u');
+        const btnModeL = document.getElementById('mode-l');
+
+        btnModeU.addEventListener('click', () => {
+            config.mode = 'U';
+            btnModeU.className = 'py-2 px-3 rounded-md text-xs font-semibold transition bg-sky-500 text-slate-950 shadow';
+            btnModeL.className = 'py-2 px-3 rounded-md text-xs font-semibold transition text-slate-400 hover:text-white';
+            resetSimulation();
+        });
+
+        btnModeL.addEventListener('click', () => {
+            config.mode = 'L';
+            btnModeL.className = 'py-2 px-3 rounded-md text-xs font-semibold transition bg-sky-500 text-slate-950 shadow';
+            btnModeU.className = 'py-2 px-3 rounded-md text-xs font-semibold transition text-slate-400 hover:text-white';
+            resetSimulation();
+        });
+
+        // Sliders
+        document.getElementById('slider-speed').addEventListener('input', (e) => {
+            config.speed = Number(e.target.value);
+            document.getElementById('val-speed').textContent = `${config.speed} px/s`;
+        });
+
+        document.getElementById('slider-radius').addEventListener('input', (e) => {
+            config.radius = Number(e.target.value);
+            document.getElementById('val-radius').textContent = `${config.radius} px`;
+            resetSimulation();
+        });
+
+        document.getElementById('slider-friction').addEventListener('input', (e) => {
+            config.friction = Number(e.target.value);
+            let label = 'Bajo';
+            if (config.friction === 0) label = 'Sin roce';
+            else if (config.friction <= 0.03) label = 'Hielo';
+            else if (config.friction <= 0.12) label = 'Moderado';
+            else label = 'Alto';
+            document.getElementById('val-friction').textContent = `${config.friction.toFixed(2)} (${label})`;
+        });
+
+        document.getElementById('slider-restitution').addEventListener('input', (e) => {
+            config.restitution = Number(e.target.value);
+            document.getElementById('val-restitution').textContent = config.restitution.toFixed(2);
+        });
+
+        // Checkboxes
+        document.getElementById('chk-vectors').addEventListener('change', (e) => {
+            config.showVectors = e.target.checked;
+        });
+
+        document.getElementById('chk-trail').addEventListener('change', (e) => {
+            config.showTrail = e.target.checked;
+        });
+
+        document.getElementById('chk-slowmo').addEventListener('change', (e) => {
+            config.slowMo = e.target.checked;
+        });
+
+        // Inicialización al cargar y al redimensionar pantalla
+        window.addEventListener('resize', resizeCanvases);
+        window.onload = () => {
+            resizeCanvases();
+            requestAnimationFrame(animate);
+        };
+    </script>
+</body>
+</html>
